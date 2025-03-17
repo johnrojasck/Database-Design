@@ -1,11 +1,64 @@
+--creates the parent table holding the two HPO Core Competencies
 create table HPOCoreCompetencies (
-	ID int not null,
+	CompetencyID int not null,
 	Competency varchar(200) not null
-	primary key (ID)
+	primary key (CompetencyID)
 	);
 
+--populates the table with the two HPO Core Competencies
 insert into HPOCoreCompetencies 
 	values 
 	('1','Cognitive Coherency'),
 	('2', 'Motion Coherency')
 	;
+
+--creates the child table holding the 5 Macros
+create table HPOMacros (
+	MacroID int not null,
+	Macro varchar(200) not null,
+	CompetencyID int,
+	primary key (MacroID),
+	foreign key (CompetencyID) references HPOCoreCompetencies(CompetencyID)
+	);
+
+--populates the table, Macros, and assigns them to the corresponding Core Competencies
+insert into HPOMacros
+	values 
+	('1','Vision','1'),
+	('2', 'Decisions','1'),
+	('3','Weapon Control','2'),
+	('4','Body Control','2'),
+	('5','Accuracy','2')
+	;
+
+--creates the child table holding the 10 Micros
+create table HPOMicros (
+	MicroID int not null,
+	Micro varchar(200) not null,
+	MacroID int,
+	primary key (MicroID),
+	foreign key (MacroID) references HPOMacros(MacroID)
+	);
+
+--populates the table, Micros, and assigns them to the corresponding Macros
+insert into HPOMicros
+	values 
+	('1','Reaction Time','1'),
+	('2','Contrast Sensitivity','1'),
+	('3','Threat Recognition Single Target','2'),
+	('4','Threat Prioritization Multiple Targets','2'),
+	('5','Weapon Presentation Time','3'),
+	('6','Reload Time','3'),
+	('7','Movement Presentation Time','4'),
+	('8','Position Transition Time','4'),
+	('9','Hit %','5'),
+	('10','Lethality','5')
+	;	
+
+--the current full table containing the HPO Flowchart
+select *
+	from HPOCoreCompetencies cc
+	inner join HPOMacros ma on ma.CompetencyID = cc.CompetencyID
+	inner join HPOMicros mi on mi.MacroID = ma.MacroID
+
+
