@@ -1,3 +1,4 @@
+
 --creates the parent table holding the two HPO Core Competencies
 create table HPOCoreCompetencies (
 	CompetencyID int not null,
