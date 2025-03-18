@@ -1,0 +1,18 @@
+
+--creates the parent table HPOBaselineDrills which is really just a subset of the Drill table
+create table HPOBaselineDrills(
+	BaselineDrillID int identity(1,1) not null,
+	DrillID int not null,
+	Description varchar(200) not null,
+	primary key (BaselineDrillID)
+	)
+	;
+
+--populates the table with all variations of names which the ASALT sites have used as the Baseline
+insert into HPOBaselineDrills (DrillID, Description)
+select DrillId,Description
+	from drill
+	where Description like '%ASALT%'
+	and Description not like '%training%'
+	;
+
