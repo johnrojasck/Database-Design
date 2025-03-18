@@ -1,0 +1,8 @@
+select * from
+(
+select UserName, DrillDesc, SessionLaneSubjectId,
+ROW_NUMBER() OVER(PARTITION BY UserName, DrillDesc
+ORDER BY UserName, DrillDesc, SessionLaneSubjectId desc) RevRowNum
+from v_SessionDetailLaneScore v
+) post
+where RevRowNum < 4
