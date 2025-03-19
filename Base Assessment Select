@@ -1,4 +1,4 @@
---this select gives the last first drills run for each unique user over all time for each
+--this select gives the first drills run for each unique user over all time for each
 --drill in the Baseline Drill set.
 --use this script to join with the view on slsid to isolate the Baseline Assessment performances
 select bl.*
