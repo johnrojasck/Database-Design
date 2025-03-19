@@ -1,29 +1,26 @@
---this select gives the last three drills run on each unique day and unique user for each
+--this select gives the last first drills run for each unique user over all time for each
 --drill in the Baseline Drill set.
 --use this script to join with the view on slsid to isolate the Baseline Assessment performances
-select * from
-(
-select UserName, DrillDesc, SessionLaneSubjectId
-,DATEFROMPARTS(
-datepart(year,starttimestamp)
-,datepart(month,starttimestamp)
-,datepart(day,starttimestamp)
-) DateYMD
-,
---creates a counting by these partitions
-ROW_NUMBER() OVER(PARTITION BY UserName, DrillDesc, 
-DATEFROMPARTS(
-datepart(year,starttimestamp)
-,datepart(month,starttimestamp)
-,datepart(day,starttimestamp)
-)
-ORDER BY UserName, DrillDesc, SessionLaneSubjectId) RowNum
---desc on ssid gives starts counting the list in reverse order to give last 3 drill runs
-from v_SessionDetailLaneScore v
-) bl 
+select bl.*
+, bd.BaselineDrillID
+, bd.DrillID 
+	from(
+	select UserName, DrillDesc, SessionLaneSubjectId
+	,DATEFROMPARTS(
+	datepart(year,starttimestamp)
+	,datepart(month,starttimestamp)
+	,datepart(day,starttimestamp)
+	) DateYMD,
+
+	--creates a counting by these partitions
+	ROW_NUMBER() OVER(PARTITION BY UserName, DrillDesc
+	ORDER BY UserName, DrillDesc, SessionLaneSubjectId) RowNum
+	--counts the list in order to give the first 3 drill runs
+	from v_SessionDetailLaneScore v
+	) bl 
 
 --joined to HPO Baseline drill set to include only those drills
 inner join HPOBaselineDrills bd on bd.Description = bl.DrillDesc
 
---gives the last three drill runs on the day
+--gives the first 3 drill runs over all time on each unique user
 where RowNum < 4
