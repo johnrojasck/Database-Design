@@ -1,0 +1,156 @@
+
+
+create view v2_SessionDetailLaneScore as
+(
+SELECT        
+		sd.SessionDetailId,
+		sd.DrillDesc,
+		--sd.DrillFolderDesc,
+		sd.StartTimeStamp,
+		sd.EndTimeStamp,
+		--sd.Deleted,
+		--sd.ExcludeFromScoring,
+		--sd.AppType,
+		sls.SessionLaneSubjectId, 
+		sls.UserName, 
+		sls.LaneNumber,
+		--sls.Deleted DeletedSLS,
+		--sls.FirstShot,
+		--MIN(sls.firstTargetPlacedTimeStamp) FirstTargetPlacedTimeStamp, 
+		--MIN(sls.lastTargetRemovedTimeStamp) LastTargetRemovedTimeStamp,
+		
+	--how does this count work?
+		count(*) TotalTargetCount,
+		SUM(case when st.SceneryElement = 1 then 1 else 0 end) SceneryCount,
+		count(*) - SUM(case when st.SceneryElement = 1 then 1 else 0 end) TargetCount,
+
+		--drill scoring settings
+		MIN(sd.TimeValue) TimeValue, MIN(sd.HitValue) HitValue, MIN(sd.PointValue) PointValue, MIN(sd.KillValue) KillValue, 
+		MIN(sd.MissValue) MissValue, MIN(sd.PenaltyValue) PenaltyValue, MIN(sd.NotEngagedValue) NotEngagedValue, MIN(sd.DistFromCenterValue) DistFromCenterValue,
+		sd.PenaltyFails, sd.ExposureScored, MIN(sd.ShotGroupValue) ShotGroupValue,
+
+		--sls scores
+		SUM(st.HitCount * sd.HitValue) HitValueTotal,
+		SUM(st.PointsSum * sd.PointValue) PointValueTotal,
+		SUM(st.WasKilled * sd.KillValue) KillValueTotal,
+		SUM((st.ShotCount - st.HitCount - st.PenaltyCount) * sd.MissValue) MissValueTotal,
+		SUM(st.PenaltyCount * sd.PenaltyValue) PenaltyValueTotal,
+		SUM(CASE when st.Engaged = 0 and st.SceneryElement = 0 then 1 else 0 end) NotEngaged,
+		SUM(CASE when st.Engaged = 0 and st.SceneryElement = 0 then 1 else 0 end * sd.NotEngagedValue) NotEngagedValueTotal,
+		SUM(sls.ShotGroupScore * sd.ShotGroupValue) ShotGroupValueTotal, 
+	--do not understand what this represents opposed to the previous value above
+		MAX(sls.ShotGroupScore) ShotGroupScore,
+		
+		--complicated case logic to calculate the Drill Run Time
+		MAX(cast(case 
+		--When this is a timed drill, if the drill runs longer than max time or no shots taken then use max time
+		--Note - using SD start/endtime to calculate the runtime since it is controlled by time and not target removal
+		when  coalesce(sd.MaxSeconds, 0) > 0 and coalesce(sls.MaxSecondsExceeded, 0) = 1
+			then sd.MaxSeconds
+		when sls.FirstTargetPlacedTimeStamp = sls.LastTargetRemovedTimeStamp  then 
+			(datediff(ms, sd.StartTimeStamp, coalesce(sd.EndTimeStamp,sls.LastTargetRemovedTimeStamp)) - sls.PauseMillis)/1000.000 
+		else 
+			case
+			when datediff(ms, sls.firstTargetPlacedTimeStamp, sls.lastTargetRemovedTimeStamp) > 900000 then 900.0
+			else (datediff(ms, sls.FirstTargetPlacedTimeStamp, sls.LastTargetRemovedTimeStamp) - sls.PauseMillis)/1000.000 
+			end
+		end as decimal(16,4))) DrillRunTime,
+
+		--calculating Target Display Time (not based on individual targets, but over all targets in drill)
+		MAX(CAST(case when datediff(ms, sls.firstTargetPlacedTimeStamp, sls.lastTargetRemovedTimeStamp) > 900000 then 900.0
+			else (datediff(ms, sls.FirstTargetPlacedTimeStamp, sls.LastTargetRemovedTimeStamp) - sls.PauseMillis)/1000.000
+			end as decimal(16,4)))  TargetDisplayTime,
+
+		SUM(st.ShotCount) Shots,
+		SUM(coalesce(st.HitCount,0)) Hits, 
+		SUM((st.ShotCount - st.HitCount - st.PenaltyCount)) Misses, 
+		SUM(st.PenaltyCount) Penalties, 
+		SUM(st.PointsSum) Points,
+		SUM(case when st.WasKilled = 1 then 1 else 0 end) Kills,
+
+	--why do we need a MIN here?
+		MIN(CASE	
+			when sd.ExposureScored = 1 then 'E' 
+			when sd.PenaltyFails = 1 then 'F' 
+			when sd.KillValue > 0 then 'K' 
+			when sd.HitValue > 0 or sd.PointValue > 0 then 'P' 
+			ELSE 'D' END) ScoreCode,
+		--AVG(st.DistanceFromCenterSum) DistFromCenter,
+		--AVG(st.DistanceFromCenterSum) * sd.DistFromCenterValue DistFromCenterValueTotal,
+		
+		--four convoluted terms used in calculating Lethality, detailed definitions found in SmartSheet Glossary
+		MAX(stSum.LethalitySum) LethalitySum,
+		MAX(stSum.LethalityAvg) LethalityAvg,
+		MAX(stSum.LethalHits) LethalHits,
+		MAX(stSum.LethalHitsAvg) LethalHitsAvg,
+
+	--how does this operate on Ray's side?
+        --If any target is flagged for "pass scoring", then the drill supports "pass scoring" overall, and will display pass/fail info in the HUD
+        CAST(MAX(CAST(st.PassScored as int)) as bit) PassScored,
+
+        --If the target isn't part of "pass scoring", or if it is and it was killed in time less than the passKillSeconds, then it passes
+        --Any target that is part of "pass scoring" but is not killed fast enough, results in a "0" being calculated here, meaning the student did not pass the drill.
+        CAST(MIN(CASE when st.PassScored = 0 or (st.PassScored = 1 and (datediff(ms, st.StartTimeStamp, st.EndTimeStamp)/1000.0) <= st.PassKillSeconds) then 1 else 0 END) as bit) Passed,
+
+        --If any target is flagged for "lethal scoring", then the drill supports "lethal scoring" overall, and will display lethal/not-leathal info in the HUD
+        CAST(MAX(CAST(st.LethalScored as int)) as bit) LethalScored,
+
+        --If the target isn't part of "lethal scoring", or if it is and it was hit such that the LethalityAvg is greater or equal to the specified lethal level,
+        --then the shooting on this target is considered lethal.  If any target configured for "lethal scoring" does not have a LethalityAvg greater or equal to
+        --the specified lethal level, then the student is not lethal for the drill run.
+        CAST(MIN(CASE when st.LethalScored = 0 or (st.LethalScored = 1 and ISNULL(stsum.LethalityAvg,0) >= st.LethalLevel) then 1 else 0 END) as bit) Lethal,
+		
+		max(sd.OptimalScore) OptimalScore
+
+		from SessionDetail sd
+		inner join SessionLaneSubject sls on sd.SessionDetailId = sls.SessionDetailId
+		inner join SessionTarget st on st.SessionDetailId = sls.SessionDetailId and sls.LaneNumber = st.laneNumber
+	--this join is only for the four Lethality metrics?
+		inner join (
+			select 	SessionDetailId, laneNumber,
+				ISNULL(SUM(LethalitySum),0) LethalitySum,
+
+				CAST(case when ISNULL(SUM(case when LethalTarget = 1 then ShotCount else 0 end),0) = 0 then 
+					CAST(0 as numeric(8,3))
+				else 
+					CAST(SUM(LethalitySum) as numeric(8,3)) / SUM(case when LethalTarget = 1 then ShotCount else 0 end) 
+				end as numeric(8,3)) LethalityAvg,
+
+				ISNULL(SUM(case when LethalTarget = 1 then HitCount else 0 end),0) LethalHits,
+
+				CAST(case when ISNULL(SUM(case when LethalTarget = 1 then ShotCount else 0 end),0) = 0 then 
+					CAST(0 as numeric(8,3))
+				else 
+					CAST(SUM(case when lethalTarget = 1 and LethalHitCount > 0 then LethalHitCount else 0 end) as numeric(8,3)) / SUM(case when LethalTarget = 1 then ShotCount else 0 end) 
+				end as numeric(8,3)) LethalHitsAvg 
+				from SessionTarget
+				group by SessionDetailId,laneNumber) stSum on stSum.SessionDetailId = sls.SessionDetailId and sls.LaneNumber = stSum.laneNumber
+	
+	--added by John to isolate specific drills
+		inner join HPOBaselineDrills bd
+		on bd.Description = sd.DrillDesc
+
+		where sd.deleted = 0
+			and sls.deleted = 0
+			and sls.FirstTargetPlacedTimeStamp IS NOT NULL 
+			and sls.LastTargetRemovedTimeStamp IS NOT NULL
+		
+	--I understand why some of these are necessary but not all of them...
+		group by 
+		sd.SessionDetailId,
+		sd.DrillDesc,
+		sd.DrillFolderDesc,
+		sd.StartTimeStamp,
+		sd.EndTimeStamp,
+		sd.Deleted,
+		sd.ExcludeFromScoring,
+		sd.AppType,
+		sls.SessionLaneSubjectId, 
+		sls.UserName, 
+		sls.LaneNumber,
+		sls.Deleted,
+		sls.FirstShot,
+		sd.ExposureScored,
+		sd.PenaltyFails,
+		sd.DistFromCenterValue
+		)
