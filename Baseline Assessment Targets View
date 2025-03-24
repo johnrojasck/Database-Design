@@ -1,0 +1,17 @@
+
+--This view contains the Target Descriptions used in all of the Baseline Assessment Drills
+
+create view BaselineAssessmentTargets
+as
+
+select distinct
+bld.*,
+st.TargetDesc
+from HPOBaselineDrills bld
+inner join SessionDetail sd
+on bld.Description = sd.DrillDesc
+
+inner join SessionTarget st
+on sd.SessionDetailId = st.SessionDetailId
+
+--order by 1, 4
