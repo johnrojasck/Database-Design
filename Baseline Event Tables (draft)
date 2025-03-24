@@ -1,0 +1,62 @@
+
+
+--This select gives a breakdown of usage by day and by Marine
+--Shows only the Baseline Drills
+
+select 
+bl.Username,
+DATEFROMPARTS(
+datepart(year,starttimestamp)
+,datepart(month,starttimestamp)
+,datepart(day,starttimestamp)
+) DateYMD,
+count(distinct bl.SessionLaneSubjectId) BADrillsRun,
+sum(Shots) RoundsFired,
+count(distinct bl.DrillDesc) BADistinctDrills
+
+	from BaselineSLSID bl
+	inner join v_SessionDetailLaneScore v
+	on v.SessionLaneSubjectId = bl.SessionLaneSubjectId
+
+	inner join HPOBaselineDrills bd
+	on v.DrillDesc = bd.Description
+
+	where TRY_CAST(v.UserName as int) > 999999999
+
+group by 
+bl.UserName,
+DATEFROMPARTS(
+datepart(year,starttimestamp)
+,datepart(month,starttimestamp)
+,datepart(day,starttimestamp))
+
+order by 2 desc, 1
+
+--This select gives a breakdown of usage by day 
+--Shows only the Marines
+--Shows only the Baseline Drills
+
+select 
+DATEFROMPARTS(
+datepart(year,starttimestamp)
+,datepart(month,starttimestamp)
+,datepart(day,starttimestamp)
+) DateYMD,
+COUNT(distinct UserName) UniqueUsers,
+count(distinct SessionLaneSubjectId) BADrillsRun,
+sum(Shots) RoundsFired,
+count(distinct DrillDesc) BADistinctDrills
+
+	from v_SessionDetailLaneScore v
+	inner join HPOBaselineDrills bd
+	on v.DrillDesc = bd.Description
+
+	where TRY_CAST(v.UserName as int) > 999999999
+
+group by 
+DATEFROMPARTS(
+datepart(year,starttimestamp)
+,datepart(month,starttimestamp)
+,datepart(day,starttimestamp)) 
+
+order by 1 desc
