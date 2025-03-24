@@ -1,0 +1,32 @@
+--This view should contain the rolled up performance metrics as aggregations for each user.
+
+create view PostPerformance
+as
+
+select 
+p.username,
+p.DrillDesc,
+p.DateYMD,
+sls.lanenumber,
+
+--Agg1 is the Time to Engage 
+avg(sts.FirstShotSplit) TimeToEngageAvg
+	from PostAssessmentSLSID p
+	left join SessionLaneSubject sls
+	on p.SessionLaneSubjectId = sls.SessionLaneSubjectId
+
+	left join v_SessionTargetSplits sts
+	on sls.SessionDetailId = sts.SessionDetailId
+	and sls.LaneNumber = sts.LaneNumber
+
+	--This filters out any non-Marine users (i.e. they did not input a 10 digit EDIPI as their username)
+	where TRY_CAST(p.UserName as int) > 999999999
+
+	group by 
+	p.UserName,
+	p.DrillDesc,
+	p.DateYMD,
+	sls.LaneNumber
+
+	--order by p.DateYMD desc,
+	--p.UserName
