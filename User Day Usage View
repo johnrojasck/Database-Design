@@ -1,0 +1,57 @@
+
+/*
+Creates a view storing each user's simple usage numbers by day.
+*/
+
+create view UserDayUsage as
+(
+select 
+--sls.SessionLaneSubjectId,
+sls.username,
+DATEFROMPARTS(
+	datepart(year,sd.starttimestamp)
+	,datepart(month,sd.starttimestamp)
+	,datepart(day,sd.starttimestamp)
+	) DateYMD,
+SUM(st.ShotCount) UserShots,
+SUM(coalesce(st.HitCount,0)) UserHits, 
+SUM((st.ShotCount - st.HitCount - st.PenaltyCount)) UserMisses, 
+SUM(st.PenaltyCount) UserPenalties
+from SessionLaneSubject sls
+inner join SessionDetail sd
+on sd.SessionDetailId = sls.SessionDetailId
+inner join SessionTarget st
+on sd.SessionDetailId = st.SessionDetailId
+and st.LaneNumber = sls.LaneNumber
+
+/*where DATEFROMPARTS(
+	datepart(year,sd.starttimestamp)
+	,datepart(month,sd.starttimestamp)
+	,datepart(day,sd.starttimestamp)
+	) = '03-18-2025'
+and username not like '%DEFAULT%'
+*/
+
+	group by 
+		--sls.SessionDetailId,
+		--sd.DrillDesc,
+		--sd.DrillFolderDesc,
+		--sd.StartTimeStamp,
+		--sd.EndTimeStamp,
+		--sd.Deleted,
+		--sd.ExcludeFromScoring,
+		--sd.AppType,
+		--sls.SessionLaneSubjectId, 
+		sls.UserName, 
+		--sls.LaneNumber,
+		--sls.Deleted,
+		--sls.FirstShot,
+		--sd.ExposureScored,
+		--sd.PenaltyFails,
+		--sd.DistFromCenterValue,
+		DATEFROMPARTS(
+	datepart(year,sd.starttimestamp)
+	,datepart(month,sd.starttimestamp)
+	,datepart(day,sd.starttimestamp)
+	)
+)
