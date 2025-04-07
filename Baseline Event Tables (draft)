@@ -12,7 +12,10 @@ datepart(year,starttimestamp)
 ) DateYMD,
 count(distinct bl.SessionLaneSubjectId) BADrillsRun,
 sum(Shots) RoundsFired,
-count(distinct bl.DrillDesc) BADistinctDrills
+count(distinct bl.DrillDesc) BADistinctDrills,
+CAST(count(distinct bl.SessionLaneSubjectId) as float)
+/
+CAST(count(distinct bl.DrillDesc)*3 as float) BLProgression
 
 	from BaselineSLSID bl
 	inner join v_SessionDetailLaneScore v
@@ -55,6 +58,11 @@ count(distinct DrillDesc) BADistinctDrills
 
 group by 
 DATEFROMPARTS(
+datepart(year,starttimestamp)
+,datepart(month,starttimestamp)
+,datepart(day,starttimestamp)) 
+
+order by 1 desc
 datepart(year,starttimestamp)
 ,datepart(month,starttimestamp)
 ,datepart(day,starttimestamp)) 
