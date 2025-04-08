@@ -1,6 +1,11 @@
---this select gives the first drills run for each unique user over all time for each
---drill in the Baseline Drill set.
---use this script to join with the view on slsid to isolate the Baseline Assessment performances
+create view v_BaselineSLSIDs as
+
+/*
+this select gives the first drills run for each unique user over all time for each
+drill in the Baseline Drill set.
+use this script to join with the view on slsid to isolate the Baseline Assessment performances
+*/
+
 select bl.*
 , bd.BaselineDrillID
 , bd.DrillID 
@@ -14,7 +19,7 @@ select bl.*
 
 	--creates a counting by these partitions
 	ROW_NUMBER() OVER(PARTITION BY UserName, DrillDesc
-	ORDER BY UserName, DrillDesc, SessionLaneSubjectId) RowNum
+	ORDER BY UserName, DrillDesc, SessionLaneSubjectId) DrillRunSeq
 	--counts the list in order to give the first 3 drill runs
 	from v_SessionDetailLaneScore v
 	) bl 
@@ -23,4 +28,8 @@ select bl.*
 inner join HPOBaselineDrills bd on bd.Description = bl.DrillDesc
 
 --gives the first 3 drill runs over all time on each unique user
-where RowNum < 4
+where DrillRunSeq < 4
+--isolates only Marines who have correctly input their EDIPI as a 10-digit string
+and TRY_CAST(bl.UserName as int) > 999999999
+
+--select * from v_BaselineSLSIDs
