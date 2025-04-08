@@ -1,0 +1,39 @@
+create view v_BaselineEvent as
+/*
+This select gives a breakdown of usage by day 
+Includes only the Marines
+Shows only the Baseline Drills and completion of the Baseline Assessment
+*/
+select 
+DATEFROMPARTS(
+datepart(year,starttimestamp)
+,datepart(month,starttimestamp)
+,datepart(day,starttimestamp)
+) DateYMD,
+COUNT(distinct bl.UserName) UniqueUsers,
+--counts the total number of drill runs in the Baseline Assessment
+count(distinct bl.SessionLaneSubjectId) BADrillsRun,
+--counts the distinct numbers of drills in the Baseline Assessment that were run
+count(distinct bl.DrillDesc) BADistinctDrills,
+--calculates a completion percentage of the full Baseline Assessment
+CAST(count(distinct bl.SessionLaneSubjectId) as float)
+/
+CAST(count(distinct bl.DrillDesc)*3*count(distinct bl.UserName) as float) BACompletion,
+sum(Shots) RoundsFired
+	from v_BaselineSLSIDs bl
+	--joins to all session data from the view
+	inner join v_SessionDetailLaneScore v
+	on v.SessionLaneSubjectId = bl.SessionLaneSubjectId
+	--joins to isolate the Baseline Assessment drills
+	inner join HPOBaselineDrills bd
+	on v.DrillDesc = bd.Description
+	--isolates Marines that correctly input EDIPI as the username as a 10-digit string
+	where TRY_CAST(v.UserName as int) > 999999999
+	--case: a user completed the Baseline Assessment over different days (at Lejeune)
+	--and v.UserName = 1612910711
+group by 
+DATEFROMPARTS(
+datepart(year,starttimestamp)
+,datepart(month,starttimestamp)
+,datepart(day,starttimestamp))
+--order by 1 desc
