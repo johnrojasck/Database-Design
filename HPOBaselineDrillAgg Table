@@ -1,0 +1,79 @@
+
+/*
+creates the table HPOBaselineDrillAgg to allow pairing with
+HPO Core Competency tables and grouping of metric aggregations
+*/
+
+create table HPOBaselineDrillAgg
+	(
+	BaselineDrillAggID int identity(1,1) not null,
+	Description varchar(200) not null,
+	HPOMicro int,
+	TagTimeToEngage bit not null,
+	TagHitPcnt bit not null,
+	TagLethality bit not null,
+	TagTimeToEngageFirstTgt bit not null,
+	TagTimeToEngageSecondTgt bit not null,
+	TagHitPcntSecondTgt bit ,
+	TagLethalitySecondTgt bit ,
+	primary key (BaselineDrillAggID)
+	)
+	;
+
+--hard coded tag values. Seek a way to improve this process.
+insert into HPOBaselineDrillAgg
+	values 
+	('ASALT_REACTIONARY_GAP','1','1','0','0','0','0','0','0'),
+	('ASALT_CONTRAST_SATURATION','2','1','0','0','0','0','0','0'),
+	('ASALT_CONTRAST_SATURATION','9','0','1','0','0','0','0','0'),
+	('ASALT_GO_NO_GO','3','1','0','0','0','0','0','0'),
+	('ASALT_GO_NO_GO','9','0','1','0','0','0','0','0'),
+	('ASALT_BURST_DISC','4','1','0','0','0','1','0','0'),
+	('ASALT_BURST_DISC','9','0','0','0','0','0','1','0'),
+	('ASALT_BURST_DISC','10','0','0','0','0','0','0','1'),
+	('ASALT_A1+_5_ROUNDS','4','1','0','0','0','0','0','0'),
+	('ASALT_A1+_5_ROUNDS','9','0','1','0','0','0','0','0'),
+	('ASALT_A1+_5_ROUNDS','10','0','0','1','0','0','0','0'),
+	('ASALT_HUNT_4_180','4','1','0','0','1','0','0','0'),
+	('ASALT_HUNT_4_180','7','0','0','0','1','0','0','0'),
+	('ASALT_HUNT_4_180','9','0','1','0','0','0','0','0'),
+	('ASALT_HUNT_4_180','10','0','0','1','0','0','0','0'),
+	('ASALT_LOW_READY','5','1','0','0','0','0','0','0'),
+	('ASALT_LOW_READY','9','0','1','0','0','0','0','0'),
+	('ASALT_LOW_READY','10','0','0','1','0','0','0','0'),
+	('ASALT_HIGH_READY','5','1','0','0','0','0','0','0'),
+	('ASALT_HIGH_READY','9','0','1','0','0','0','0','0'),
+	('ASALT_HIGH_READY','10','0','0','1','0','0','0','0'),
+	('ASALT_DESTROY_RELOAD','6','0','0','0','0','1','0','0'),
+	('ASALT_DESTROY_RELOAD','9','0','0','0','0','0','1','0'),
+	('ASALT_DESTROY_RELOAD','10','0','0','0','0','0','0','1'),
+	('ASALT_180_DEGREE_TURN_LEFT','7','1','0','0','0','0','0','0'),
+	('ASALT_180_DEGREE_TURN_LEFT','9','0','1','0','0','0','0','0'),
+	('ASALT_180_DEGREE_TURN_LEFT','10','0','0','1','0','0','0','0'),
+	('ASALT_180_DEGREE_TURN_RIGHT','7','1','0','0','0','0','0','0'),
+	('ASALT_180_DEGREE_TURN_RIGHT','9','0','1','0','0','0','0','0'),
+	('ASALT_180_DEGREE_TURN_RIGHT','10','0','0','1','0','0','0','0'),
+	('ASALT_SKP_LETHALITY','8','1','0','0','0','0','0','0'),
+	('ASALT_SKP_LETHALITY','9','0','1','0','0','0','0','0'),
+	('ASALT_SKP_LETHALITY','10','0','0','1','0','0','0','0'),
+	('ASALT_E_TYPE_100_BASELINE','9','1','1','0','0','0','0','0'),
+	('ASALT_E_TYPE_100_BASELINE','10','1','0','1','0','0','0','0'),
+	('ASALT_E_TYPE_200_BASELINE','9','1','1','0','0','0','0','0'),
+	('ASALT_E_TYPE_200_BASELINE','10','1','0','1','0','0','0','0'),
+	('ASALT_E_TYPE_300_BASELINE','9','1','1','0','0','0','0','0'),
+	('ASALT_E_TYPE_300_BASELINE','10','1','0','1','0','0','0','0'),
+	('ASALT_100_BASELINE','9','1','1','0','0','0','0','0'),
+	('ASALT_100_BASELINE','10','1','0','1','0','0','0','0'),
+	('ASALT_200_BASELINE','9','1','1','0','0','0','0','0'),
+	('ASALT_200_BASELINE','10','1','0','1','0','0','0','0'),
+	('ASALT_300_BASELINE','9','1','1','0','0','0','0','0'),
+	('ASALT_300_BASELINE','10','1','0','1','0','0','0','0'),
+	('ASALT_180_DEGREE_TURN','7','1','0','0','0','0','0','0'),
+	('ASALT_180_DEGREE_TURN','9','1','1','0','0','0','0','0'),
+	('ASALT_180_DEGREE_TURN','10','1','0','1','0','0','0','0'),
+	('ASALT_SKP_7_50_250','8','1','0','0','0','0','0','0'),
+	('ASALT_SKP_7_50_250','9','1','1','0','0','0','0','0'),
+	('ASALT_SKP_7_50_250','10','1','0','1','0','0','0','0')
+	;
+
+--select * from HPOBaselineDrillAgg
