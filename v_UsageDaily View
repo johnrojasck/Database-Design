@@ -1,5 +1,6 @@
 
 
+
 Create view v_UsageDaily as
 
 select 
@@ -14,6 +15,10 @@ select
 	,COUNT(distinct sls.sessionlanesubjectid) DrillsRun
 	,count(distinct sd.sessiondetailid) DrillsRunAsGroup
 	,sum(st.ShotCount) RoundsFired
+	--to act as a foreign key 
+	,YEAR(sd.StartTimeStamp)*100+MONTH(sd.starttimestamp) YM
+	--to act as a primary key
+	,YEAR(sd.StartTimeStamp)*10000+MONTH(sd.starttimestamp)*100+DAY(sd.starttimestamp) YMD
 
 	from SessionLaneSubject sls
 	inner join SessionDetail sd on sls.SessionDetailId = sd.SessionDetailId
@@ -38,4 +43,5 @@ select
 		,datepart(month,sd.starttimestamp)
 		,datepart(day,sd.starttimestamp)
 		)
-
+	,YEAR(sd.StartTimeStamp)*100+MONTH(sd.starttimestamp)
+	,YEAR(sd.StartTimeStamp)*10000+MONTH(sd.starttimestamp)*100+DAY(sd.starttimestamp)
