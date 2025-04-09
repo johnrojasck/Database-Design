@@ -1,0 +1,35 @@
+
+Create view v_DailyUsage as
+
+select 
+	DATEFROMPARTS(
+		datepart(year,sd.starttimestamp)
+		,datepart(month,sd.starttimestamp)
+		,datepart(day,sd.starttimestamp)
+		) DateYMD
+	,COUNT(*) TotalCnt
+	,count(distinct UserName) UserCnt
+	,max(sd.LaneCount) LanesUsed
+	,COUNT(distinct sls.sessionlanesubjectid) DrillsRun
+	,count(distinct sd.sessiondetailid) DrillsRunAsGroup
+	,sum(st.ShotCount) RoundsFired
+
+	from SessionLaneSubject sls
+	inner join SessionDetail sd on sls.SessionDetailId = sd.SessionDetailId
+	inner join SessionTarget st on sls.SessionDetailId = st.SessionDetailId
+		and sls.LaneNumber = st.LaneNumber
+
+	where DATEFROMPARTS(
+		datepart(year,sd.starttimestamp)
+		,datepart(month,sd.starttimestamp)
+		,datepart(day,sd.starttimestamp)
+		) >= '2024-08-01' --Launch date for Lejeune
+
+	group by 
+	DATEFROMPARTS(
+		datepart(year,sd.starttimestamp)
+		,datepart(month,sd.starttimestamp)
+		,datepart(day,sd.starttimestamp)
+		)
+
+	
