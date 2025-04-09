@@ -1,5 +1,6 @@
 
-Create view v_DailyUsage as
+
+Create view v_UsageDaily as
 
 select 
 	DATEFROMPARTS(
@@ -24,6 +25,12 @@ select
 		,datepart(month,sd.starttimestamp)
 		,datepart(day,sd.starttimestamp)
 		) >= '2024-08-01' --Launch date for Lejeune
+	
+		--taken from Brad's view
+		and sd.deleted = 0
+		and sls.deleted = 0
+		and sls.FirstTargetPlacedTimeStamp IS NOT NULL 
+		and sls.LastTargetRemovedTimeStamp IS NOT NULL
 
 	group by 
 	DATEFROMPARTS(
@@ -32,4 +39,3 @@ select
 		,datepart(day,sd.starttimestamp)
 		)
 
-	
