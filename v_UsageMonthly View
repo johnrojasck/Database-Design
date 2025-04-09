@@ -3,6 +3,7 @@
 create view v_UsageMonthly as
 
 select 
+	--acts as a primary key
 	YEAR(sd.StartTimeStamp)*100+MONTH(sd.starttimestamp) YM,
 	DATEFROMPARTS(YEAR(sd.StartTimeStamp),MONTH(sd.starttimestamp),28) YMD
 	,COUNT(*) TotalCnt
