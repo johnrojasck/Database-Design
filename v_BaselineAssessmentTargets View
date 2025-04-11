@@ -1,7 +1,7 @@
 
 --This view contains the Target Descriptions used in all of the Baseline Assessment Drills
 
-create view BaselineAssessmentTargets
+create view v_BaselineAssessmentTargets
 as
 
 select distinct
