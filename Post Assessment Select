@@ -31,8 +31,3 @@ inner join HPOBaselineDrills bd on bd.Description = post.DrillDesc
 --gives the last three drill runs on the day for each unique user
 where RevRowNum < 4
 
---joined to HPO Baseline drill set to include only those drills
-inner join HPOBaselineDrills bd on bd.Description = post.DrillDesc
-
---gives the last three drill runs on the day
-where RevRowNum < 4
