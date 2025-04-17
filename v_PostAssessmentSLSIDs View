@@ -1,3 +1,5 @@
+create view v_PostAssessmentSLSIDs as
+
 --this select gives the last three drills run on each unique day and unique user for each
 --drill in the Baseline Drill set.
 --use this script to join with the view on slsid to isolate the Post Assessment performances
@@ -30,4 +32,3 @@ inner join HPOBaselineDrills bd on bd.Description = post.DrillDesc
 
 --gives the last three drill runs on the day for each unique user
 where RevRowNum < 4
-
