@@ -1,9 +1,9 @@
 
 /*
-Creates a view storing each user's simple usage numbers by day.
+Creates a view storing each simple usage numbers by day.
 */
 
-create view UserDayUsage as
+create view v_UsageDaily as
 select 
 	DATEFROMPARTS(
 		datepart(year,sd.starttimestamp)
