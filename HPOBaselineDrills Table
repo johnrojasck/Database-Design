@@ -16,3 +16,5 @@ select DrillId,Description
 	and Description not like '%training%'
 	;
 
+insert into HPOBaselineDrills
+	values ('24418','10_SKP_POSITIONAL_LETHALITY')
