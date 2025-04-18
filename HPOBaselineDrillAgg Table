@@ -73,7 +73,10 @@ insert into HPOBaselineDrillAgg
 	('ASALT_180_DEGREE_TURN','10','1','0','1','0','0','0','0'),
 	('ASALT_SKP_7_50_250','8','1','0','0','0','0','0','0'),
 	('ASALT_SKP_7_50_250','9','1','1','0','0','0','0','0'),
-	('ASALT_SKP_7_50_250','10','1','0','1','0','0','0','0')
+	('ASALT_SKP_7_50_250','10','1','0','1','0','0','0','0'),
+	('10_SKP_POSITIONAL_LETHALITY','8','1','0','0','0','0','0','0'),
+	('10_SKP_POSITIONAL_LETHALITY','9','1','1','0','0','0','0','0'),
+	('10_SKP_POSITIONAL_LETHALITY','10','1','0','1','0','0','0','0')
 	;
 
 --select * from HPOBaselineDrillAgg
