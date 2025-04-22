@@ -1,0 +1,79 @@
+
+/*
+Attempting to create an aggregates table for the HPO drills
+*/
+
+with cte1 as 
+(
+select 
+bl.UserName
+,bl.DateYMD
+,bl.DrillDesc
+
+--Drill Down 1
+--uncomment these (and in the group by) to view the table expanded down a detail level
+	/*
+	,v.SessionDetailId
+	,bl.SessionLaneSubjectId
+
+--Drill Down 2
+--uncomment these (and in the group by) to view the table expanded down a detail level
+
+	,sts.SessionTargetId
+	,sts.TargetNum
+	*/
+
+,cast(AVG(sts.firstshotsplit) as decimal (10,2)) AvgTtE
+,MIN(sts.firstshotsplit) FastestTtE
+,SUM(sts.firstshotsplit) SumTtE
+,COUNT(*) stsIDcount
+
+from v_BaselineSLSIDs bl
+inner join v_SessionDetailLaneScore v
+on bl.SessionLaneSubjectId = v.SessionLaneSubjectId
+inner join v_SessionTargetSplits sts
+on v.SessionDetailId = sts.SessionDetailId
+and v.LaneNumber = sts.LaneNumber
+
+where bl.DateYMD >= '04-16-2025'
+and bl.UserName = 'WITMAN'
+
+group by 
+bl.UserName
+,bl.DateYMD
+,bl.DrillDesc
+
+--Drill Down 1
+/*
+	,v.SessionDetailId
+	,bl.SessionLaneSubjectId
+
+--Drill Down 2
+
+	,sts.SessionTargetId
+	,sts.TargetNum
+*/
+)
+
+select  
+cte1.UserName
+,cte1.DateYMD
+,cte1.DrillDesc
+,cte1.stsIDcount
+,min(
+	case 
+		when hpo.TagTimeToEngage = 1 then cte1.FastestTtE 
+		else null 
+	end) 
+	FastestTtE
+
+from cte1 
+inner join HPOBaselineDrillAgg hpo
+on cte1.DrillDesc = hpo.Description
+
+group by 
+cte1.UserName
+,cte1.DateYMD
+,cte1.DrillDesc
+,cte1.FastestTtE
+,cte1.stsIDcount
