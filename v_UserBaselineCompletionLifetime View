@@ -1,0 +1,49 @@
+
+
+
+create view v_UserBaselineCompletionLifetime as
+
+/*
+This select gives a breakdown of usage by Marine and by Day
+Includes only the Baseline Drills and shows a Marine's completion 
+percentage of the Baseline Assessment.
+*/
+
+with cte1 as 
+(
+	select 
+	bl.Username,
+	--counts the total number of drill runs in the Baseline Assessment
+	count(distinct bl.SessionLaneSubjectId) BADrillsRun,
+	--counts the distinct numbers of drills in the Baseline Assessment that were run
+	count(distinct bl.DrillDesc) BADistinctDrills,
+	--calculates a completion percentage of the full Baseline Assessment
+	CAST(count(distinct bl.SessionLaneSubjectId) as float)
+	/
+	45 BACompletion,
+	sum(Shots) RoundsFired
+
+		from v_BaselineSLSIDs bl
+		--joins to all session data from the view
+		inner join v_SessionDetailLaneScore v
+		on v.SessionLaneSubjectId = bl.SessionLaneSubjectId
+		--joins to isolate the Baseline Assessment drills
+		inner join HPOBaselineDrills bd
+		on v.DrillDesc = bd.Description
+		--isolates Marines that correctly input EDIPI as the username as a 10-digit string
+		where TRY_CAST(v.UserName as int) > 999999999
+		--case: a user completed the Baseline Assessment over different days (at Lejeune)
+		--and v.UserName = 1612910711
+
+	group by 
+	bl.UserName
+),
+
+cte2 as 
+(
+	select *
+	,ROW_NUMBER() over(partition by username order by username desc) BLCount
+	from cte1
+)
+
+select * from cte2
