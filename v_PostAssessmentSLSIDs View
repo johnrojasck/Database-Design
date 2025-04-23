@@ -1,34 +1,85 @@
+
 create view v_PostAssessmentSLSIDs as
 
---this select gives the last three drills run on each unique day and unique user for each
---drill in the Baseline Drill set.
 --use this script to join with the view on slsid to isolate the Post Assessment performances
-select post.* 
-, bd.BaselineDrillID
-, bd.DrillID
-	from
-	(
-	select UserName, DrillDesc, SessionLaneSubjectId
-	,DATEFROMPARTS(
-	datepart(year,starttimestamp)
-	,datepart(month,starttimestamp)
-	,datepart(day,starttimestamp)
-	) DateYMD
-	,
-	--creates a counting by these partitions
-	ROW_NUMBER() OVER(PARTITION BY UserName, DrillDesc, 
-	DATEFROMPARTS(
-	datepart(year,starttimestamp)
-	,datepart(month,starttimestamp)
-	,datepart(day,starttimestamp)
-	)
-	ORDER BY UserName, DrillDesc, SessionLaneSubjectId desc) RevRowNum
-	--desc on ssid prompts it to start counting the list in reverse order to give the last 3 drill runs
-	from v_SessionDetailLaneScore v
-	) post 
 
---joined to HPO Baseline drill set to include only those drills
-inner join HPOBaselineDrills bd on bd.Description = post.DrillDesc
+--this select gives the last three drills run on each unique day and unique user for each drill in the Baseline Drill set. 
+with cte1 as
+(
+	select post.* 
+	, bd.BaselineDrillID
+	, bd.DrillID
+		from
+		(
+		select UserName, DrillDesc, SessionLaneSubjectId
+		,DATEFROMPARTS(
+		datepart(year,starttimestamp)
+		,datepart(month,starttimestamp)
+		,datepart(day,starttimestamp)
+		) DateYMD
+		,
+		--creates a counting by these partitions
+		ROW_NUMBER() OVER(PARTITION BY UserName, DrillDesc, 
+		DATEFROMPARTS(
+		datepart(year,starttimestamp)
+		,datepart(month,starttimestamp)
+		,datepart(day,starttimestamp)
+		)
+		ORDER BY UserName, DrillDesc, SessionLaneSubjectId desc) RevDrillRunSeq
+		--desc on ssid prompts it to start counting the list in reverse order to give the last 3 drill runs
+		from v_SessionDetailLaneScore v
+		) post 
 
---gives the last three drill runs on the day for each unique user
-where RevRowNum < 4
+	--joined to HPO Baseline drill set to include only those drills
+	inner join HPOBaselineDrills bd on bd.Description = post.DrillDesc
+
+	--gives the last three drill runs on the day for each unique user
+	where RevDrillRunSeq < 4
+	--isolates only Marines who have correctly input their EDIPI as a 10-digit string
+	and TRY_CAST(post.UserName as int) > 999999999
+),
+
+--the following 2 cte's are called so that they have matching columns
+
+--get all columns from above except the RevDrillRunSeq column
+cte2 as 
+(
+	select 
+	UserName
+	,DrillDesc
+	,SessionLaneSubjectID
+	,DateYMD
+	,BaselineDrillID
+	,DrillID
+	from cte1
+),
+
+--get all columns from the v_BaselineSLSIDs except the DrillRunSeq column
+cte3 as 
+(
+	select 
+	UserName
+	,DrillDesc
+	,SessionLaneSubjectID
+	,DateYMD
+	,BaselineDrillID
+	,DrillID
+	from v_BaselineSLSIDs
+),
+
+--this cte acts as the set operation EXCEPT to extract only the Post SLSIDs that are not already in the Baseline SLSIDs
+cte4 as 
+(
+	select *
+	from cte2
+	except 
+	select * 
+	from cte3
+)
+
+--calls the above cte and adds the RevDrillRunSeq column back in from the first cte
+select 
+cte4.*
+,cte1.RevDrillRunSeq
+from cte4
+inner join cte1 on cte1.SessionLaneSubjectId = cte4.SessionLaneSubjectId
