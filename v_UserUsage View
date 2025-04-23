@@ -1,0 +1,93 @@
+
+create view v_UserUsage as
+
+/*
+This creates a view showing each User and some usage metrics for that user.
+For now it is only checking against data captured on Baseline drills.
+*/
+
+with cte1 as 
+(
+	select 
+	bl.Username,
+	DATEFROMPARTS(
+	datepart(year,starttimestamp)
+	,datepart(month,starttimestamp)
+	,datepart(day,starttimestamp)
+	) DateYMD
+	--counts the total number of drill runs in the Baseline Assessment
+	--count(distinct bl.SessionLaneSubjectId) BADrillsRun,
+	--counts the distinct numbers of drills in the Baseline Assessment that were run
+	--count(distinct bl.DrillDesc) BADistinctDrills,
+	--calculates a completion percentage of the full Baseline Assessment
+	/*
+	,CAST(count(distinct bl.SessionLaneSubjectId) as float)
+	/
+	45 BACompletion,
+	sum(Shots) RoundsFired
+	*/
+
+		from v_BaselineSLSIDs bl
+		--joins to all session data from the view
+		inner join v_SessionDetailLaneScore v
+		on v.SessionLaneSubjectId = bl.SessionLaneSubjectId
+		--joins to isolate the Baseline Assessment drills
+		inner join HPOBaselineDrills bd
+		on v.DrillDesc = bd.Description
+		--isolates Marines that correctly input EDIPI as the username as a 10-digit string
+		where TRY_CAST(v.UserName as int) > 999999999
+		--case: a user completed the Baseline Assessment over different days (at Lejeune)
+		--and v.UserName = 1612910711
+
+	group by 
+	bl.UserName,
+	DATEFROMPARTS(
+	datepart(year,starttimestamp)
+	,datepart(month,starttimestamp)
+	,datepart(day,starttimestamp))
+)
+,
+cte2 as
+(
+	select 
+	UserName
+	,MIN(DateYMD) FirstDate
+	,MAX(DateYMD) RecentDate
+	,count(distinct DateYMD) UserVisitCount
+
+	from cte1
+
+	group by 
+	UserName
+)
+
+select 
+cte2.*
+,case 
+	when max(ubc.BACompletion) = 1 then 1
+	else 0
+	end 
+	BACompletionCheck
+,min(
+	case 
+		when ubc.BACompletion = 1 then ubc.DateYMD
+		else null
+		end
+	)
+	BACompletionDate
+,COUNT(*) Cnt
+
+from cte2
+left join v_UserBaselineCompletion ubc
+on cte2.UserName = ubc.Username
+
+--where ubc.BACompletion = 1
+
+group by 
+cte2.UserName
+,cte2.FirstDate
+,cte2.RecentDate
+,cte2.UserVisitCount
+
+
+--order by 1, 2
