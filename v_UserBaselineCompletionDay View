@@ -1,6 +1,6 @@
 
 
-create view v_UserBaselineCompletion as
+create view v_UserBaselineCompletionDay as
 
 /*
 This select gives a breakdown of usage by Marine and by Day
