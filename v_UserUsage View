@@ -64,13 +64,13 @@ cte2 as
 select 
 cte2.*
 ,case 
-	when max(ubc.BACompletion) = 1 then 1
+	when max(ubcd.BACompletion) = 1 then 1
 	else 0
 	end 
 	BACompletionCheck
 ,min(
 	case 
-		when ubc.BACompletion = 1 then ubc.DateYMD
+		when ubcd.BACompletion = 1 then ubcd.DateYMD
 		else null
 		end
 	)
@@ -78,8 +78,8 @@ cte2.*
 ,COUNT(*) Cnt
 
 from cte2
-left join v_UserBaselineCompletion ubc
-on cte2.UserName = ubc.Username
+left join v_UserBaselineCompletionDay ubcd
+on cte2.UserName = ubcd.Username
 
 --where ubc.BACompletion = 1
 
