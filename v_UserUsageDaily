@@ -1,0 +1,68 @@
+
+create view v_UserDayUsage as
+
+/*
+This creates a view showing each User and some usage metrics for that user
+partioned by day.
+*/
+
+with cte1 as 
+(
+	select 
+	Username
+	,DATEFROMPARTS(
+	datepart(year,starttimestamp)
+	,datepart(month,starttimestamp)
+	,datepart(day,starttimestamp)
+	) DateYMD
+	--counts the total number of drill runs
+	,count(distinct SessionLaneSubjectId) DrillsRun
+	,sum(Shots) RoundsFired
+
+		from v_SessionDetailLaneScore v
+
+	group by 
+	UserName
+	,DATEFROMPARTS(
+	datepart(year,starttimestamp)
+	,datepart(month,starttimestamp)
+	,datepart(day,starttimestamp))
+)
+,
+
+--this cte performs simple agg totals on cte1
+--note: these could be stored in a separate user stats table and then joined to when needed.
+cte2 as
+(
+	select 
+	UserName
+	,MIN(DateYMD) FirstDate
+	,MAX(DateYMD) RecentDate
+	,count(distinct DateYMD) UserVisitCount
+
+	from cte1
+
+	group by 
+	UserName
+)
+
+select 
+cte2.*
+,cte1.DateYMD
+,cte1.DrillsRun
+,cte1.RoundsFired
+,COUNT(*) Cnt
+
+from cte2
+left join cte1 on cte2.UserName = cte1.UserName
+
+group by 
+cte2.UserName
+,cte2.FirstDate
+,cte2.RecentDate
+,cte2.UserVisitCount
+,cte1.DateYMD
+,cte1.DrillsRun
+,cte1.RoundsFired
+
+--order by 1,5 desc
