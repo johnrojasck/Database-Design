@@ -36,7 +36,7 @@ with cte1 as
 	--gives the last three drill runs on the day for each unique user
 	where RevDrillRunSeq < 4
 	--isolates only Marines who have correctly input their EDIPI as a 10-digit string
-	and TRY_CAST(post.UserName as int) > 999999999
+	--and TRY_CAST(post.UserName as int) > 999999999
 ),
 
 --the following 2 cte's are called so that they have matching columns
