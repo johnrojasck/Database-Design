@@ -35,7 +35,7 @@ with cte1 as
 		inner join HPOBaselineDrills bd
 		on v.DrillDesc = bd.Description
 		--isolates Marines that correctly input EDIPI as the username as a 10-digit string
-		where TRY_CAST(v.UserName as int) > 999999999
+		--where TRY_CAST(v.UserName as int) > 999999999
 		--case: a user completed the Baseline Assessment over different days (at Lejeune)
 		--and v.UserName = 1612910711
 
