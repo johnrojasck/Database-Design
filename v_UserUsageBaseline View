@@ -1,5 +1,5 @@
 
-create view v_UserUsage as
+create view v_UserUsageBaseline as
 
 /*
 This creates a view showing each User and some usage metrics for that user.
@@ -38,6 +38,7 @@ with cte1 as
 		where TRY_CAST(v.UserName as int) > 999999999
 		--case: a user completed the Baseline Assessment over different days (at Lejeune)
 		--and v.UserName = 1612910711
+		--need to add an and where clause to isolate data from launch date specific to site
 
 	group by 
 	bl.UserName,
