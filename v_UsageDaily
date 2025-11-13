@@ -4,30 +4,62 @@ Creates a view storing each simple usage numbers by day.
 */
 
 create view [usg].[v_UsageDaily] as
-select 
+with cte as 
+(
+	select
 	DATEFROMPARTS(
-		datepart(year,v.starttimestamp)
-		,datepart(month,v.starttimestamp)
-		,datepart(day,v.starttimestamp)
-		) DateYMD
-	,COUNT(*) TotalCnt
-	,count(distinct UserName) UniqueTrainees
-	,max(v.LaneNumber) LanesUsed
-	,COUNT(distinct v.sessionlanesubjectid) DrillsRun
-	,count(distinct v.sessiondetailid) DrillsRunAsGroup
-	,sum(v.Shots) RoundsFired
+			datepart(year,v.starttimestamp)
+			,datepart(month,v.starttimestamp)
+			,datepart(day,v.starttimestamp)
+			) DateYMD
+		,COUNT(*) TotalCnt
+		,count(distinct UserName) UniqueTrainees
+		,max(v.LaneNumber) LanesUsed
+		,COUNT(distinct v.sessionlanesubjectid) DrillsRun
+		,count(distinct v.sessiondetailid) DrillsRunAsGroup
+		,sum(v.Shots) RoundsFired
+		--to act as a foreign key 
+		,YEAR(v.StartTimeStamp)*100+MONTH(v.starttimestamp) YM
+		--to act as a primary key
+		,YEAR(v.StartTimeStamp)*10000+MONTH(v.starttimestamp)*100+DAY(v.starttimestamp) YMD
+
+		from v_SessionDetailLaneScore v
+
+		group by 
+		DATEFROMPARTS(
+			datepart(year,v.starttimestamp)
+			,datepart(month,v.starttimestamp)
+			,datepart(day,v.starttimestamp)
+			)
+		,YEAR(v.StartTimeStamp)*100+MONTH(v.starttimestamp)
+		,YEAR(v.StartTimeStamp)*10000+MONTH(v.starttimestamp)*100+DAY(v.starttimestamp)
+)
+,
+cte2 as 
+(
+	select 
+	DATEFROMPARTS(
+			datepart(year,ed.TimeStamp)
+			,datepart(month,ed.TimeStamp)
+			,datepart(day,ed.TimeStamp)
+			) DateYMD
+	,CAST(sum(ed.MinutesUsed) / 60.0 as float) UsageHours
 	--to act as a foreign key 
-	,YEAR(v.StartTimeStamp)*100+MONTH(v.starttimestamp) YM
-	--to act as a primary key
-	,YEAR(v.StartTimeStamp)*10000+MONTH(v.starttimestamp)*100+DAY(v.starttimestamp) YMD
-
-	from v_SessionDetailLaneScore v
-
+		,YEAR(ed.TimeStamp)*100+MONTH(ed.TimeStamp) YM
+		--to act as a primary key
+		,YEAR(ed.TimeStamp)*10000+MONTH(ed.TimeStamp)*100+DAY(ed.TimeStamp) YMD
+	from EotcSystemActivityDetail ed
 	group by 
-	DATEFROMPARTS(
-		datepart(year,v.starttimestamp)
-		,datepart(month,v.starttimestamp)
-		,datepart(day,v.starttimestamp)
-		)
-	,YEAR(v.StartTimeStamp)*100+MONTH(v.starttimestamp)
-	,YEAR(v.StartTimeStamp)*10000+MONTH(v.starttimestamp)*100+DAY(v.starttimestamp)
+		DATEFROMPARTS(
+			datepart(year,ed.TimeStamp)
+			,datepart(month,ed.TimeStamp)
+			,datepart(day,ed.TimeStamp)
+			)
+		,YEAR(ed.TimeStamp)*100+MONTH(ed.TimeStamp)
+		,YEAR(ed.TimeStamp)*10000+MONTH(ed.TimeStamp)*100+DAY(ed.TimeStamp)
+)
+
+select cte.*
+,cte2.UsageHours
+from cte
+inner join cte2 on cte.DateYMD = cte2.DateYMD
