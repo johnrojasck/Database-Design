@@ -3,48 +3,31 @@
 Creates a view storing each simple usage numbers by day.
 */
 
-create view v_UsageDaily as
+create view [usg].[v_UsageDaily] as
 select 
 	DATEFROMPARTS(
-		datepart(year,sd.starttimestamp)
-		,datepart(month,sd.starttimestamp)
-		,datepart(day,sd.starttimestamp)
+		datepart(year,v.starttimestamp)
+		,datepart(month,v.starttimestamp)
+		,datepart(day,v.starttimestamp)
 		) DateYMD
 	,COUNT(*) TotalCnt
-	,count(distinct UserName) UserCnt
-	,max(sd.LaneCount) LanesUsed
-	,COUNT(distinct sls.sessionlanesubjectid) DrillsRun
-	,count(distinct sd.sessiondetailid) DrillsRunAsGroup
-	,sum(st.ShotCount) RoundsFired
+	,count(distinct UserName) UniqueTrainees
+	,max(v.LaneNumber) LanesUsed
+	,COUNT(distinct v.sessionlanesubjectid) DrillsRun
+	,count(distinct v.sessiondetailid) DrillsRunAsGroup
+	,sum(v.Shots) RoundsFired
 	--to act as a foreign key 
-	,YEAR(sd.StartTimeStamp)*100+MONTH(sd.starttimestamp) YM
+	,YEAR(v.StartTimeStamp)*100+MONTH(v.starttimestamp) YM
 	--to act as a primary key
-	,YEAR(sd.StartTimeStamp)*10000+MONTH(sd.starttimestamp)*100+DAY(sd.starttimestamp) YMD
+	,YEAR(v.StartTimeStamp)*10000+MONTH(v.starttimestamp)*100+DAY(v.starttimestamp) YMD
 
-	from SessionLaneSubject sls
-	inner join SessionDetail sd on sls.SessionDetailId = sd.SessionDetailId
-	inner join SessionTarget st on sls.SessionDetailId = st.SessionDetailId
-		and sls.LaneNumber = st.LaneNumber
-
-	/*
-	where DATEFROMPARTS(
-		datepart(year,sd.starttimestamp)
-		,datepart(month,sd.starttimestamp)
-		,datepart(day,sd.starttimestamp)
-		) >= '2024-08-01' --Launch date for Lejeune
-	*/
-
-		--taken from Brad's view
-		and sd.deleted = 0
-		and sls.deleted = 0
-		and sls.FirstTargetPlacedTimeStamp IS NOT NULL 
-		and sls.LastTargetRemovedTimeStamp IS NOT NULL
+	from v_SessionDetailLaneScore v
 
 	group by 
 	DATEFROMPARTS(
-		datepart(year,sd.starttimestamp)
-		,datepart(month,sd.starttimestamp)
-		,datepart(day,sd.starttimestamp)
+		datepart(year,v.starttimestamp)
+		,datepart(month,v.starttimestamp)
+		,datepart(day,v.starttimestamp)
 		)
-	,YEAR(sd.StartTimeStamp)*100+MONTH(sd.starttimestamp)
-	,YEAR(sd.StartTimeStamp)*10000+MONTH(sd.starttimestamp)*100+DAY(sd.starttimestamp)
+	,YEAR(v.StartTimeStamp)*100+MONTH(v.starttimestamp)
+	,YEAR(v.StartTimeStamp)*10000+MONTH(v.starttimestamp)*100+DAY(v.starttimestamp)
