@@ -3,7 +3,7 @@
 Creates a view storing each simple usage numbers by day.
 */
 
-create view [usg].[v_UsageDaily] as
+create view v_UsageDaily as
 with cte as 
 (
 	select
