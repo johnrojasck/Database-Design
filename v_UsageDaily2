@@ -1,0 +1,50 @@
+/*Version 2 includes revisions by Brad
+
+/*
+Creates a view storing each simple usage numbers by day.
+*/
+drop view if exists v_UsageDaily2
+go
+
+
+
+create view v_UsageDaily2 as
+with CTE_USAGE_SHOOTER_DAILY as 
+(
+  select
+    CONVERT(CHAR(10), v.StartTimeStamp,120) DateYMD
+    ,COUNT(*) TotalCnt
+    ,count(distinct UserName) UniqueTrainees
+    ,max(v.LaneNumber) LanesUsed
+    ,COUNT(distinct v.sessionlanesubjectid) DrillsRun
+    ,count(distinct v.sessiondetailid) DrillsRunAsGroup
+    ,sum(v.Shots) RoundsFired
+
+
+
+    from v_SessionDetailLaneScore v
+
+
+
+    group by 
+    CONVERT(CHAR(10), v.StartTimeStamp,120)
+),
+
+
+
+CTE_USAGE_SYSTEM_DAILY as 
+(
+  select 
+    CONVERT(CHAR(10), ed.TimeStamp,120) DateYMD
+  ,CAST(sum(ed.MinutesUsed) / 60.0 as float) UsageHours
+  from EotcSystemActivityDetail ed
+  group by 
+    CONVERT(CHAR(10), ed.TimeStamp,120)
+)
+
+
+
+select shooteru.*
+,sysu.UsageHours
+from CTE_USAGE_SHOOTER_DAILY shooteru
+inner join CTE_USAGE_SYSTEM_DAILY sysu on shooteru.DateYMD = sysu.DateYMD
